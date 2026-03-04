@@ -1,0 +1,16 @@
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\config\ComponentServiceInjectConfig.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\controller\RiskDecisionController.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\dto\DecisionRequest.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\dto\DecisionResponse.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\entity\Blacklist.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\entity\DecisionLog.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\entity\RuleConfig.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\entity\Workflow.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\repository\BlacklistRepository.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\repository\DecisionLogRepository.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\repository\RuleConfigRepository.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\repository\WorkflowRepository.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\RiskFlowServerApplication.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\service\impl\BlacklistServiceImpl.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\service\impl\RuleServiceImpl.java
+C:\Users\14701\Desktop\RiskFlow\risk-flow\risk-flow-server\src\main\java\org\example\service\RiskDecisionService.java

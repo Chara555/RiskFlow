@@ -20,6 +20,7 @@
 
     <modules>
         <module>risk-flow-core</module>
+        <module>risk-flow-server</module>
         <module>risk-flow-sdk-starter</module>
         <module>risk-flow-sample</module>
     </modules>

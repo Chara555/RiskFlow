@@ -1,0 +1,22 @@
+# LiteFlow 配置
+liteflow:
+  # 规则文件路径
+  rule-source: flow/risk-decision.xml
+  
+  # 开启文件监控热刷新
+  enable-monitor-file: true
+  
+  # 打印执行日志
+  print-execution-log: true
+  
+  # 失败重试次数
+  retry-count: 0
+  
+  # 上下文槽位数量
+  slot-size: 100
+
+# 日志配置
+logging:
+  level:
+    com.yomahub.liteflow: INFO
+    org.example: DEBUG
