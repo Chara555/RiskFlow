@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow>
+    <!-- 通用风控决策流程 -->
+    <chain name="riskDecisionFlow">
+        THEN(
+            loadContext,                    <!-- 1. 加载上下文 -->
+            parallelBaseCheck,              <!-- 2. 并行基础检测 -->
+            ruleExecute,                    <!-- 3. 规则执行 -->
+            IF(isHighRisk,                  <!-- 4. 条件判断 -->
+                THEN(llmRiskAnalyze),       <!-- 高风险：AI 分析 -->
+                THEN(skipAiAnalyze)         <!-- 低风险：跳过 AI -->
+            ),
+            decisionJudge,                  <!-- 5. 决策判定 -->
+            POST(logRecord)                 <!-- 6. 后置：记录日志 -->
+        );
+    </chain>
+
+    <!-- 并行基础检测子流程 -->
+    <chain name="parallelBaseCheck">
+        WHEN(
+            ipBlacklistCheck                <!-- IP 黑名单检测 -->
+        );
+    </chain>
+
+    <!-- 跳过 AI 分析（空操作） -->
+    <chain name="skipAiAnalyze">
+        THEN(
+            dummyNode
+        );
+    </chain>
+
+    <!-- 记录日志 -->
+    <chain name="logRecord">
+        THEN(
+            dummyNode
+        );
+    </chain>
+
+    <!-- 辅助节点 -->
+    <chain name="dummyChain">
+        THEN(dummyNode);
+    </chain>
+</flow>

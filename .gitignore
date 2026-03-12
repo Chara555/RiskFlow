@@ -1,0 +1,63 @@
+# =============================================
+# RiskFlow Git Ignore
+# =============================================
+
+# --- 1. Java 编译与打包排除 ---
+*.class
+**/target/
+bin/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# --- 2. Maven ---
+.mvn/
+mvnw
+mvnw.cmd
+
+# --- 3. IDE 配置文件 ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+
+# --- 4. 本地配置文件（不上传到 GitHub） ---
+# application.yml 由用户本地使用，不提交
+application.yml
+
+# --- 5. 日志与临时文件 ---
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+.temp/
+*.bak
+*.tmp
+
+# --- 6. 系统相关 ---
+.DS_Store
+Thumbs.db
+
+# --- 7. 环境配置 ---
+.env
+.env.local
+*.local
+
+# --- 8. 数据库相关 ---
+*.db
+*.sqlite
+
+# --- 9. 编译输出 ---
+out/
+build/
+dist/
