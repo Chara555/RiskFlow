@@ -39,7 +39,9 @@ public class RuleExecuteComponent extends NodeComponent {
             executeHardcodedRules(context);
         }
 
-        log.info("[RuleExecute] 总风险评分={}", context.getTotalRiskScore());
+        // 根据当前总分设置高风险标记，供后续 IF(isHighRisk) 条件节点使用
+        context.setIsHighRisk(context.getTotalRiskScore() >= 50);
+        log.info("[RuleExecute] 总风险评分={}, 是否高风险={}", context.getTotalRiskScore(), context.getIsHighRisk());
     }
 
     /**

@@ -22,7 +22,7 @@ public class RiskDecisionService {
 
     private static final Logger log = LoggerFactory.getLogger(RiskDecisionService.class);
 
-    private static final String DEFAULT_WORKFLOW_CODE = "risk-decision-flow";
+    private static final String DEFAULT_WORKFLOW_CODE = "riskDecisionFlow";
 
     private final FlowExecutor flowExecutor;
     private final WorkflowRepository workflowRepository;
