@@ -61,3 +61,6 @@ Thumbs.db
 out/
 build/
 dist/
+
+# --- 10. 文档目录 ---
+docs/

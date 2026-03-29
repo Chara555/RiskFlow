@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: riskflow-postgres
+    environment:
+      POSTGRES_DB: riskflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./risk-flow-server/src/main/resources/db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # RiskFlow Server（REST 服务）
+  risk-flow-server:
+    build:
+      context: ./risk-flow-server
+      dockerfile: Dockerfile
+    container_name: riskflow-server
+    environment:
+      DB_PASSWORD: postgres
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RiskFlow Sample（示例应用）
+  risk-flow-sample:
+    build:
+      context: ./risk-flow-sample
+      dockerfile: Dockerfile
+    container_name: riskflow-sample
+    environment:
+      DB_PASSWORD: postgres
+      RISKFLOW_SERVER_BASE_URL: http://risk-flow-server:8080
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8081:8081"
+    depends_on:
+      risk-flow-server:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
