@@ -2,7 +2,11 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * 规则配置实体
@@ -30,6 +34,14 @@ public class RuleConfig {
 
     @Column(nullable = false)
     private Integer score = 0;
+
+    /**
+     * 扩展参数（JSON 格式）
+     * 例如: {"startHour": 0, "endHour": 6}
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> params;
 
     @Column(nullable = false)
     private Boolean enabled = true;

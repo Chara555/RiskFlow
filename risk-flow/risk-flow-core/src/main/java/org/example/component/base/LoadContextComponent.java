@@ -1,12 +1,12 @@
 package org.example.component.base;
 
 import org.example.context.RiskFlowContext;
+import org.example.core.util.RiskTimeUtils;
 import com.yomahub.liteflow.annotation.LiteflowComponent;
 import com.yomahub.liteflow.core.NodeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -26,9 +26,9 @@ public class LoadContextComponent extends NodeComponent {
             context.setEventId(UUID.randomUUID().toString());
         }
         
-        // 如果没有请求时间，设置当前时间
-        if (context.getRequestTime() == null) {
-            context.setRequestTime(LocalDateTime.now());
+        // 如果没有请求时间，设置当前时间戳（毫秒）
+        if (context.getRequestTimeMs() == null) {
+            context.setRequestTimeMs(RiskTimeUtils.nowMs());
         }
         
         log.info("[LoadContext] 初始化上下文，eventId={}, eventType={}, userId={}", 

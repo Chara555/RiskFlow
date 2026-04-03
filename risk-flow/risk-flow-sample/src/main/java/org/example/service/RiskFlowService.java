@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.UUID;
+import org.example.core.util.RiskTimeUtils;
 
 /**
  * RiskFlow SDK 服务（嵌入式模式）
@@ -20,7 +21,8 @@ import java.util.UUID;
 public class RiskFlowService {
 
     // 注入 LiteFlow FlowExecutor（由 LiteFlow 自动装配）
-    private final com.yomahub.liteflow.flow.FlowExecutor flowExecutor;
+    // Use Object to avoid compile-time dependency on LiteFlow types in the sample module
+    private final Object flowExecutor;
 
     /**
      * 执行风控决策（简化版）
@@ -33,6 +35,26 @@ public class RiskFlowService {
      */
     public RiskFlowContext decide(String eventType, String userId, String userIp, Map<String, Object> features) {
         return decide(eventType, userId, userIp, null, features);
+    }
+
+    /**
+     * Reflection helper to invoke FlowExecutor.execute2Resp(String, RiskFlowContext)
+     */
+    @SuppressWarnings("unchecked")
+    private RiskFlowContext invokeFlowExecutor(Object executor, String flowId, RiskFlowContext context) throws Exception {
+        if (executor == null) {
+            throw new IllegalStateException("FlowExecutor 未注入");
+        }
+        try {
+            java.lang.reflect.Method m = executor.getClass().getMethod("execute2Resp", String.class, Object.class);
+            Object res = m.invoke(executor, flowId, context);
+            return (RiskFlowContext) res;
+        } catch (NoSuchMethodException nsme) {
+            // try alternative signature
+            java.lang.reflect.Method m = executor.getClass().getMethod("execute2Resp", String.class, RiskFlowContext.class);
+            Object res = m.invoke(executor, flowId, context);
+            return (RiskFlowContext) res;
+        }
     }
 
     /**
@@ -65,6 +87,8 @@ public class RiskFlowService {
         context.setUserId(userId);
         context.setUserIp(userIp);
         context.setDeviceId(deviceId);
+        // 立即标注请求时间戳（毫秒）
+        context.setRequestTimeMs(RiskTimeUtils.nowMs());
         
         // 设置特征数据
         if (features != null) {
@@ -78,7 +102,7 @@ public class RiskFlowService {
      * 执行决策流程
      */
     private RiskFlowContext executeDecision(RiskFlowContext context) {
-        long startTime = System.currentTimeMillis();
+        long startTime = RiskTimeUtils.nowMs();
         
         try {
             log.info("========== 开始风控决策 ==========");
@@ -86,11 +110,21 @@ public class RiskFlowService {
                     context.getEventType(), context.getUserId(), context.getUserIp());
             log.info("特征数据: {}", context.getFeatures());
             
-            // 调用 LiteFlow 执行决策流程
-            RiskFlowContext result = flowExecutor.execute2Resp("riskDecisionFlow", context);
-            
-            long cost = System.currentTimeMillis() - startTime;
+            // 调用 LiteFlow 执行决策流程 (via reflection to avoid hard dependency in this sample module)
+            RiskFlowContext result = null;
+            try {
+                result = invokeFlowExecutor(flowExecutor, "riskDecisionFlow", context);
+            } catch (Exception ex) {
+                log.error("无法调用 FlowExecutor.execute2Resp: {}", ex.getMessage(), ex);
+                context.setResult(RiskFlowContext.DecisionResult.REJECT);
+                context.setResultMessage("FlowExecutor 调用失败: " + ex.getMessage());
+                context.setExecutionTimeMs(RiskTimeUtils.nowMs() - startTime);
+                return context;
+            }
+
+            long cost = RiskTimeUtils.nowMs() - startTime;
             result.setExecutionTimeMs(cost);
+            result.setDecisionTimeMs(RiskTimeUtils.nowMs());
             
             log.info("========== 决策完成 ==========");
             log.info("决策结果: {}, 风险评分: {}, 耗时: {}ms", 
@@ -103,7 +137,7 @@ public class RiskFlowService {
             log.error("风控决策执行异常", e);
             context.setResult(RiskFlowContext.DecisionResult.REJECT);
             context.setResultMessage("系统异常：" + e.getMessage());
-            context.setExecutionTimeMs(System.currentTimeMillis() - startTime);
+            context.setExecutionTimeMs(RiskTimeUtils.nowMs() - startTime);
             return context;
         }
     }

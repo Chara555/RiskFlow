@@ -45,12 +45,14 @@ CREATE TABLE IF NOT EXISTS rule_config (
     type       VARCHAR(30),
     expression TEXT,
     score      INTEGER  DEFAULT 0,
+    params     JSONB,                              -- 扩展参数（如 startHour、endHour）
     enabled    BOOLEAN  DEFAULT TRUE,
     priority   INTEGER  DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_rule_config_enabled ON rule_config (enabled);
+CREATE INDEX IF NOT EXISTS idx_rule_config_code    ON rule_config (code);
 
 -- ============================================================
 -- 4. 动态决策阈值表

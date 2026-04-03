@@ -1,4 +1,4 @@
-package org.example.service.impl;
+package org.example.service.impl.local;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -14,7 +14,7 @@ import java.time.Instant;  // 用于 addBlacklist 方法
 import java.util.concurrent.TimeUnit;
 
 @Service
-// 关键点：如果没有配置，默认加载这个类
+//如果没有配置，默认加载这个类
 @ConditionalOnProperty(name = "riskflow.cache.type", havingValue = "local", matchIfMissing = true)
 public class LocalBlacklistServiceImpl implements BlacklistService {
 

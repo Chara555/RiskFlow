@@ -1,9 +1,11 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.example.client.RiskFlowRestClient;
 import org.example.context.RiskFlowContext;
+import org.example.core.util.RiskTimeUtils;
 import org.example.dto.RiskFlowResponse;
 import org.example.service.RiskFlowService;
 import org.springframework.web.bind.annotation.*;
@@ -126,24 +128,24 @@ public class SampleController {
         log.info("========== 开始对比测试 ==========");
 
         // SDK 模式
-        long sdkStart = System.currentTimeMillis();
+        long sdkStart = RiskTimeUtils.nowMs();
         RiskFlowContext sdkResult = riskFlowService.loginRiskCheck(
                 request.getUserId(),
                 request.getUserIp(),
                 request.isNewDevice(),
                 request.getFailedLoginCount()
         );
-        long sdkCost = System.currentTimeMillis() - sdkStart;
+        long sdkCost = RiskTimeUtils.nowMs() - sdkStart;
 
         // REST 模式
-        long restStart = System.currentTimeMillis();
+        long restStart = RiskTimeUtils.nowMs();
         RiskFlowResponse restResult = riskFlowRestClient.loginRiskCheck(
                 request.getUserId(),
                 request.getUserIp(),
                 request.isNewDevice(),
                 request.getFailedLoginCount()
         );
-        long restCost = System.currentTimeMillis() - restStart;
+        long restCost = RiskTimeUtils.nowMs() - restStart;
 
         Map<String, Object> compareResult = new HashMap<>();
         compareResult.put("sdk", Map.of(
@@ -187,17 +189,21 @@ public class SampleController {
      * 将 RiskFlowContext 转换为响应 DTO
      */
     private RiskFlowResponse toResponse(RiskFlowContext context) {
+        java.time.LocalDateTime decisionTime = null;
+        if (context.getDecisionTimeMs() != null) {
+            decisionTime = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(context.getDecisionTimeMs()), java.time.ZoneId.systemDefault());
+        }
+
         return RiskFlowResponse.builder()
                 .decisionId(context.getEventId())
                 .result(context.getResult() != null ? context.getResult().name() : null)
                 .riskScore(context.getTotalRiskScore())
                 .message(context.getResultMessage())
-                .decisionTime(context.getDecisionTime())
+                .decisionTime(decisionTime)
                 .executionTimeMs(context.getExecutionTimeMs())
                 .aiAnalysisResult(context.getAiAnalysisResult())
                 .details(Map.of(
                         "isHighRisk", context.getIsHighRisk(),
-                        "ruleScores", context.getRuleScores(),
                         "baseCheckResults", context.getBaseCheckResults()
                 ))
                 .build();

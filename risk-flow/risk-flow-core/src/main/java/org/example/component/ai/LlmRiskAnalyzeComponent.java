@@ -45,7 +45,6 @@ public class LlmRiskAnalyzeComponent extends NodeComponent {
         prompt.append("用户ID：").append(context.getUserId()).append("\n");
         prompt.append("用户IP：").append(context.getUserIp()).append("\n");
         prompt.append("当前风险评分：").append(context.getTotalRiskScore()).append("\n");
-        prompt.append("规则得分详情：").append(context.getRuleScores()).append("\n");
 
         if (context.getFeatures() != null && !context.getFeatures().isEmpty()) {
             prompt.append("特征数据：").append(context.getFeatures()).append("\n");
@@ -84,13 +83,13 @@ public class LlmRiskAnalyzeComponent extends NodeComponent {
      */
     private void adjustRiskScore(RiskFlowContext context, String analysisResult) {
         if (analysisResult.contains("REJECT")) {
-            context.addRuleScore("llm_analysis", 30);
+            context.addTotalScore(30);
             context.setIsHighRisk(true);
         } else if (analysisResult.contains("REVIEW")) {
-            context.addRuleScore("llm_analysis", 15);
+            context.addTotalScore(15);
         } else {
-            // PASS，不加分
-            context.addRuleScore("llm_analysis", 0);
+            // PASS，不加分，但保留审计记录
+            context.addTotalScore(0);
         }
     }
 

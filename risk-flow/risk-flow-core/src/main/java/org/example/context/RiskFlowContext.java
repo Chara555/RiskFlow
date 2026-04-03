@@ -3,10 +3,11 @@ package org.example.context;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.example.core.model.RiskSignal;
 
 /**
  * 风控流程上下文 - 使用 DataBus 机制
@@ -42,18 +43,18 @@ public class RiskFlowContext implements Serializable {
     /** 扩展信息 */
     private Map<String, Object> extInfo = new HashMap<>();
     
-    /** 请求时间 */
-    private LocalDateTime requestTime;
+    /** 请求到达的绝对时间戳（毫秒） */
+    private Long requestTimeMs;
 
     // ==================== 中间结果 ====================
     /** 基础检测结果 */
     private Map<String, Boolean> baseCheckResults = new ConcurrentHashMap<>();
     
-    /** 规则执行得分 */
-    private Map<String, Integer> ruleScores = new ConcurrentHashMap<>();
+    /** 存储每个节点的风险信号 */
+    private Map<String, RiskSignal> riskSignals = new ConcurrentHashMap<>();
     
-    /** 总风险评分 */
-    private Integer totalRiskScore = 0;
+    /** 总风险评分 (线程安全) */
+    private AtomicInteger totalRiskScore = new AtomicInteger(0);
     
     /** AI 分析结果 */
     private String aiAnalysisResult;
@@ -68,8 +69,8 @@ public class RiskFlowContext implements Serializable {
     /** 决策消息 */
     private String resultMessage;
     
-    /** 决策时间 */
-    private LocalDateTime decisionTime;
+    /** 决策完成的绝对时间戳（毫秒） */
+    private Long decisionTimeMs;
     
     /** 执行耗时（毫秒） */
     private Long executionTimeMs;
@@ -103,21 +104,19 @@ public class RiskFlowContext implements Serializable {
         return this.features.get(key);
     }
 
-    /**
-     * 设置规则得分
-     */
-    public void addRuleScore(String ruleCode, Integer score) {
-        this.ruleScores.put(ruleCode, score);
-        recalculateTotalScore();
+    /** 将单个组件的风险信号保存到上下文 */
+    public void addRiskSignal(String componentId, RiskSignal signal) {
+        this.riskSignals.put(componentId, signal);
     }
 
-    /**
-     * 重新计算总分
-     */
-    private void recalculateTotalScore() {
-        this.totalRiskScore = ruleScores.values().stream()
-                .mapToInt(Integer::intValue)
-                .sum();
+    /** 线程安全地增加总风险分数（可为正或负） */
+    public void addTotalScore(int score) {
+        this.totalRiskScore.addAndGet(score);
+    }
+
+    /** 返回当前总风险分数 */
+    public int getTotalRiskScore() {
+        return this.totalRiskScore.get();
     }
 
     /**

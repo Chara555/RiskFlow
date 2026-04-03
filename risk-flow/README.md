@@ -73,7 +73,7 @@ risk-flow-core/
 风控流程的数据载体，包含：
 
 - **输入参数**：eventId, eventType, userId, userIp, deviceId, features, extInfo
-- **中间结果**：baseCheckResults, ruleScores, totalRiskScore, aiAnalysisResult, isHighRisk
+- **中间结果**：baseCheckResults, totalRiskScore, aiAnalysisResult, isHighRisk
 - **输出结果**：result, resultMessage, decisionTime, executionTimeMs
 
 ---

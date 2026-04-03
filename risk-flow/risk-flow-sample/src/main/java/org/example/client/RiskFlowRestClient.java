@@ -31,10 +31,8 @@ public class RiskFlowRestClient {
     private final WebClient webClient;
 
     public RiskFlowRestClient() {
-        this.webClient = WebClient.builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .responseTimeout(10, TimeUnit.SECONDS)
-                .build();
+        // Use default WebClient builder (time-outs can be configured via client connector if needed)
+        this.webClient = WebClient.builder().build();
     }
 
     /**
