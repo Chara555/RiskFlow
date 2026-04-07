@@ -127,8 +127,8 @@ public class RiskFlowService {
             result.setDecisionTimeMs(RiskTimeUtils.nowMs());
             
             log.info("========== 决策完成 ==========");
-            log.info("决策结果: {}, 风险评分: {}, 耗时: {}ms", 
-                    result.getResult(), result.getTotalRiskScore(), cost);
+            log.info("决策结果: {}, 信号摘要: {}, 耗时: {}ms", 
+                    result.getResult(), result.getLevelCounts(), cost);
             log.info("决策描述: {}", result.getResultMessage());
             
             return result;

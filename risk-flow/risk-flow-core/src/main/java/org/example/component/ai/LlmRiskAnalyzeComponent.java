@@ -3,13 +3,19 @@ package org.example.component.ai;
 import org.example.context.RiskFlowContext;
 import com.yomahub.liteflow.annotation.LiteflowComponent;
 import com.yomahub.liteflow.core.NodeComponent;
+import org.example.core.model.RiskSignal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * AI 风险分析组件 - 基于 LLM 的智能分析
  *
- * 注意：此为模拟实现，实际需接入 LLM 服务（如 OpenAI、Azure OpenAI 等）
+ * <p>职责：收集之前所有节点的信号，综合分析后产出 AI 信号。
+ * 不再直接操作分数，遵循信号驱动制。
+ *
+ * <p>注意：此为模拟实现，实际需接入 LLM 服务（如 OpenAI、Azure OpenAI 等）
  */
 @LiteflowComponent("llmRiskAnalyze")
 public class LlmRiskAnalyzeComponent extends NodeComponent {
@@ -26,13 +32,11 @@ public class LlmRiskAnalyzeComponent extends NodeComponent {
         // 调用 LLM（模拟实现）
         String analysisResult = callLLM(prompt);
 
-        // 保存分析结果
-        context.setAiAnalysisResult(analysisResult);
+        // 根据分析结果产出 AI 信号（所有节点众生平等，用 RiskSignal 说话）
+        RiskSignal aiSignal = buildAISignal(analysisResult);
+        context.addRiskSignal("llmRiskAnalyze", aiSignal);
 
-        // 根据分析结果调整风险评分
-        adjustRiskScore(context, analysisResult);
-
-        log.info("[LlmRiskAnalyze] AI 分析完成，结果: {}", analysisResult);
+        log.info("[LlmRiskAnalyze] AI 分析完成，等级: {}, 结果: {}", aiSignal.getRiskLevel(), analysisResult);
     }
 
     /**
@@ -44,7 +48,9 @@ public class LlmRiskAnalyzeComponent extends NodeComponent {
         prompt.append("事件类型：").append(context.getEventType()).append("\n");
         prompt.append("用户ID：").append(context.getUserId()).append("\n");
         prompt.append("用户IP：").append(context.getUserIp()).append("\n");
-        prompt.append("当前风险评分：").append(context.getTotalRiskScore()).append("\n");
+        // 信号摘要：统计各等级信号数量
+        Map<String, Long> levelCounts = context.getLevelCounts();
+        prompt.append("信号摘要：").append(levelCounts).append("\n");
 
         if (context.getFeatures() != null && !context.getFeatures().isEmpty()) {
             prompt.append("特征数据：").append(context.getFeatures()).append("\n");
@@ -79,30 +85,56 @@ public class LlmRiskAnalyzeComponent extends NodeComponent {
     }
 
     /**
-     * 根据 AI 分析结果调整风险评分
+     * 根据分析结果构建 AI 信号
      */
-    private void adjustRiskScore(RiskFlowContext context, String analysisResult) {
+    private RiskSignal buildAISignal(String analysisResult) {
         if (analysisResult.contains("REJECT")) {
-            context.addTotalScore(30);
-            context.setIsHighRisk(true);
+            return RiskSignal.hit(
+                    "LLM_RISK_ANALYZE",
+                    RiskSignal.LEVEL_HIGH,
+                    "AI analysis suggests REJECT",
+                    "AI 分析建议拒绝",
+                    Map.of("rawResponse", analysisResult),
+                    "AI_ANALYSIS"
+            );
         } else if (analysisResult.contains("REVIEW")) {
-            context.addTotalScore(15);
+            return RiskSignal.hit(
+                    "LLM_RISK_ANALYZE",
+                    RiskSignal.LEVEL_MEDIUM,
+                    "AI analysis suggests REVIEW",
+                    "AI 分析建议人工审核",
+                    Map.of("rawResponse", analysisResult),
+                    "AI_ANALYSIS"
+            );
         } else {
-            // PASS，不加分，但保留审计记录
-            context.addTotalScore(0);
+            return RiskSignal.pass(
+                    "LLM_RISK_ANALYZE",
+                    "AI analysis suggests PASS",
+                    "AI 分析建议通过"
+            );
         }
     }
 
     /**
-     * 仅在高风险时触发 AI 分析（由 RuleExecuteComponent 在 process 末尾设置 isHighRisk 标志）
+     * 判断是否需要触发 AI 分析
+     * 
+     * 策略：存在 HIGH 或 CRITICAL 信号时触发，避免对所有请求都调用 LLM
      */
     @Override
     public boolean isAccess() {
         RiskFlowContext context = this.getContextBean(RiskFlowContext.class);
-        boolean shouldRun = Boolean.TRUE.equals(context.getIsHighRisk());
-        if (!shouldRun) {
-            log.info("[LlmRiskAnalyze] 非高风险，跳过 AI 分析，当前评分={}", context.getTotalRiskScore());
+        
+        // 存在 CRITICAL 信号，必须 AI 分析
+        if (context.hasCriticalSignal()) {
+            log.info("[LlmRiskAnalyze] 存在 CRITICAL 信号，触发 AI 分析");
+            return true;
         }
-        return shouldRun;
+        
+        // 存在 HIGH 信号，触发 AI 分析
+        boolean hasHighRisk = !context.getSignalsByLevel(RiskSignal.LEVEL_HIGH).isEmpty();
+        if (!hasHighRisk) {
+            log.info("[LlmRiskAnalyze] 无高风险信号，跳过 AI 分析");
+        }
+        return hasHighRisk;
     }
 }

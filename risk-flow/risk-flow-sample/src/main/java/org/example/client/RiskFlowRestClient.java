@@ -72,7 +72,6 @@ public class RiskFlowRestClient {
             return RiskFlowResponse.builder()
                     .decisionId(request.getEventId())
                     .result("ERROR")
-                    .riskScore(0)
                     .message("调用风控服务异常：" + e.getMessage())
                     .build();
         }

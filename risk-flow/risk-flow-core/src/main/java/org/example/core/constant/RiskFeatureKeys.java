@@ -8,30 +8,36 @@ package org.example.core.constant;
  */
 public interface RiskFeatureKeys {
 
-    // ==================== 登录相关特征 ====================
+    // ==================== 设备维度特征 ====================
 
     /**
-     * 是否新设备登录
+     * 是否新设备
      */
     String IS_NEW_DEVICE = "isNewDevice";
 
+    // ==================== 时间维度特征 ====================
+
     /**
-     * 登录小时（0-23）
+     * 操作小时（0-23）
      */
     String LOGIN_HOUR = "loginHour";
 
+    // ==================== 行为维度特征 ====================
+
     /**
-     * 登录失败次数
+     * 操作失败次数
      */
     String FAILED_LOGIN_COUNT = "failedLoginCount";
 
+    // ==================== 地理位置维度特征 ====================
+
     /**
-     * 登录地理位置
+     * 操作地理位置
      */
     String LOGIN_LOCATION = "loginLocation";
 
     /**
-     * 登录 IP
+     * 操作 IP
      */
     String LOGIN_IP = "loginIp";
 

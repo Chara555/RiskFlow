@@ -28,27 +28,30 @@ public interface RuleConfigService {
     /**
      * 组件配置数据载体
      */
-    class ComponentConfig {
-        private final String ruleCode;
+    public class ComponentConfig {
+
         @Getter
-        private final Integer hitScore;
+        private final String ruleCode;
+
+        // 核心修改点：彻底告别 hitScore，拥抱 riskLevel
+        @Getter
+        private final String riskLevel;
+
         private final Map<String, Object> params;
+
         @Getter
         private final boolean enabled;
 
-        public ComponentConfig(String ruleCode, Integer hitScore, Map<String, Object> params, boolean enabled) {
+        //构造函数同步修改：第二个参数变成了 String riskLevel
+        public ComponentConfig(String ruleCode, String riskLevel, Map<String, Object> params, boolean enabled) {
             this.ruleCode = ruleCode;
-            this.hitScore = hitScore;
+            this.riskLevel = riskLevel;
             this.params = params;
             this.enabled = enabled;
         }
 
-        public String getRuleCode() {
-            return ruleCode;
-        }
-
         /**
-         * 获取扩展参数
+         * 获取扩展参数 (极其健壮的工具方法，保留！)
          *
          * @param key 参数键
          * @param defaultValue 默认值
@@ -71,7 +74,7 @@ public interface RuleConfigService {
         }
 
         /**
-         * 获取整型参数
+         * 获取整型参数 (解析 JSON 数值的利器，保留！)
          */
         public Integer getIntParam(String key, Integer defaultValue) {
             if (params == null || !params.containsKey(key)) {
@@ -83,6 +86,5 @@ public interface RuleConfigService {
             }
             return defaultValue;
         }
-
     }
 }

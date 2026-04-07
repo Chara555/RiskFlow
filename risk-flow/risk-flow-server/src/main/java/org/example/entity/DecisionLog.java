@@ -2,7 +2,11 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * 决策日志实体
@@ -46,13 +50,10 @@ public class DecisionLog {
     @Column(length = 100)
     private String deviceId;
 
-    /** 请求数据（JSON） */
+    /** 请求数据（JSON）—— 业务方传入的动态特征集 */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private String requestData;
-
-    /** 风险评分 */
-    @Column(nullable = false)
-    private Integer riskScore = 0;
+    private Map<String, Object> requestData;
 
     /** 决策结果：ACCEPT / REJECT / REVIEW / CHALLENGE */
     @Column(length = 20)
@@ -62,9 +63,15 @@ public class DecisionLog {
     @Column(length = 500)
     private String decisionMsg;
 
-    /** 各节点执行结果（JSON） */
+    /** 各节点执行结果（JSON）—— 完整信号快照，用于审计与回溯 */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private String nodeResults;
+    private Map<String, Object> nodeResults;
+
+    /** 信号摘要：各等级信号数量统计（如 {"HIGH": 1, "LOW": 2}） */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Long> signalSummary;
 
     /** 执行耗时（毫秒） */
     @Column
@@ -73,10 +80,6 @@ public class DecisionLog {
     /** 用户等级快照 */
     @Column(length = 20)
     private String userLevel;
-
-    /** AI分析结果 */
-    @Column(columnDefinition = "text")
-    private String aiAnalysisResult;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

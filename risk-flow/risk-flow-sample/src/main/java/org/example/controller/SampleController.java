@@ -150,13 +150,12 @@ public class SampleController {
         Map<String, Object> compareResult = new HashMap<>();
         compareResult.put("sdk", Map.of(
                 "result", sdkResult.getResult(),
-                "score", sdkResult.getTotalRiskScore(),
+                "signals", sdkResult.getLevelCounts(),
                 "costMs", sdkCost,
                 "message", sdkResult.getResultMessage()
         ));
         compareResult.put("rest", Map.of(
                 "result", restResult.getResult(),
-                "score", restResult.getRiskScore(),
                 "costMs", restCost,
                 "message", restResult.getMessage()
         ));
@@ -197,14 +196,12 @@ public class SampleController {
         return RiskFlowResponse.builder()
                 .decisionId(context.getEventId())
                 .result(context.getResult() != null ? context.getResult().name() : null)
-                .riskScore(context.getTotalRiskScore())
                 .message(context.getResultMessage())
                 .decisionTime(decisionTime)
                 .executionTimeMs(context.getExecutionTimeMs())
-                .aiAnalysisResult(context.getAiAnalysisResult())
                 .details(Map.of(
-                        "isHighRisk", context.getIsHighRisk(),
-                        "baseCheckResults", context.getBaseCheckResults()
+                        "levelCounts", context.getLevelCounts(),
+                        "signalCount", context.getRiskSignals().size()
                 ))
                 .build();
     }

@@ -17,7 +17,5 @@ public interface RuleConfigRepository extends JpaRepository<RuleConfig, Long> {
 
     List<RuleConfig> findByEnabledTrue();
 
-    List<RuleConfig> findByEnabledTrueOrderByPriorityAsc();
-
     List<RuleConfig> findByType(String type);
 }

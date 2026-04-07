@@ -1,4 +1,4 @@
-package org.example.component.rule.login;
+package org.example.component.rule;
 
 import com.yomahub.liteflow.annotation.LiteflowComponent;
 import jakarta.annotation.Resource;
@@ -10,21 +10,24 @@ import org.example.core.model.RiskSignal;
 import org.example.service.RuleConfigService;
 import org.example.service.RuleConfigService.ComponentConfig;
 
+import java.util.Map;
+
 /**
- * 登录新设备检测组件
+ * 新设备检测组件（原子能力）
  * <p>
- * 检测用户是否使用新设备登录，新设备登录通常意味着更高的风险。
- * 支持通过配置中心动态调整风险分数。
+ * 检测用户是否使用新设备操作，新设备通常意味着更高的风险。
+ * 适用于登录、支付、转账、改密码等任何需要设备风险检测的场景。
+ * 支持通过配置中心动态调整风险等级。
  * </p>
  */
 @Slf4j
-@LiteflowComponent("loginNewDeviceCheck")
-public class LoginNewDeviceCheckComponent extends AbstractRiskComponent {
+@LiteflowComponent("newDeviceCheck")
+public class NewDeviceCheckComponent extends AbstractRiskComponent {
 
-    private static final String RULE_NAME = "LOGIN_NEW_DEVICE_CHECK";
+    private static final String RULE_NAME = "NEW_DEVICE_CHECK";
 
     // ==================== 兜底默认值 ====================
-    private static final int DEFAULT_HIT_SCORE = 20;
+    private static final String DEFAULT_RISK_LEVEL = RiskSignal.LEVEL_LOW;
 
     /**
      * 规则配置服务（通过 Spring 标准注入）
@@ -35,15 +38,15 @@ public class LoginNewDeviceCheckComponent extends AbstractRiskComponent {
     @Override
     protected RiskSignal doEvaluate(RiskFlowContext context) {
         // 1. 加载动态配置（若服务不可用则使用兜底默认值）
-        int hitScore = DEFAULT_HIT_SCORE;
+        String riskLevel = DEFAULT_RISK_LEVEL;
 
         if (ruleConfigService != null) {
             ComponentConfig config = ruleConfigService.getConfig(RULE_NAME);
             if (config != null) {
-                hitScore = config.getHitScore() != null ? config.getHitScore() : DEFAULT_HIT_SCORE;
-                log.debug("[{}] 加载动态配置成功: hitScore={}", RULE_NAME, hitScore);
+                riskLevel = config.getParam("riskLevel", DEFAULT_RISK_LEVEL);
+                log.debug("[{}] 加载动态配置成功: riskLevel={}", RULE_NAME, riskLevel);
             } else {
-                log.debug("[{}] 配置不存在，使用兜底默认值: hitScore={}", RULE_NAME, hitScore);
+                log.debug("[{}] 配置不存在，使用兜底默认值: riskLevel={}", RULE_NAME, riskLevel);
             }
         } else {
             log.debug("[{}] 配置服务未注入/不可用，使用兜底默认值", RULE_NAME);
@@ -54,7 +57,9 @@ public class LoginNewDeviceCheckComponent extends AbstractRiskComponent {
 
         // 特征不存在，视为非新设备，返回无风险信号
         if (newDeviceFeature == null) {
-            return RiskSignal.pass(RULE_NAME, "特征 [isNewDevice] 不存在，视为非新设备");
+            return RiskSignal.pass(RULE_NAME,
+                    "Feature [isNewDevice] not found, assuming not a new device",
+                    "特征 [isNewDevice] 不存在，视为非新设备");
         }
 
         // 3. 防御性编程：极其健壮的布尔值解析（兼容 Boolean, String "true"/"1", Number 1）
@@ -73,16 +78,20 @@ public class LoginNewDeviceCheckComponent extends AbstractRiskComponent {
 
         // 4. 判断是否为新设备
         if (isNewDevice) {
-            log.info("[{}] 命中风险规则: 检测到新设备登录, 贡献分数={}", RULE_NAME, hitScore);
+            log.info("[{}] 命中风险规则: 检测到新设备操作, 风险等级={}", RULE_NAME, riskLevel);
             return RiskSignal.hit(
                     RULE_NAME,
-                    hitScore,
-                    "检测到新设备登录",
-                    "new_device", "login_risk"
+                    riskLevel,
+                    "New device detected",
+                    "检测到新设备操作",
+                    Map.of("isNewDevice", true),
+                    "new_device"
             );
         }
 
         // 非新设备，返回无风险信号
-        return RiskSignal.pass(RULE_NAME, "非新设备登录，风险较低");
+        return RiskSignal.pass(RULE_NAME,
+                "Not a new device, low risk",
+                "非新设备，风险较低");
     }
 }

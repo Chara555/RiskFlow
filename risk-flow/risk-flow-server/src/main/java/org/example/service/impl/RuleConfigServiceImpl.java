@@ -51,25 +51,28 @@ public class RuleConfigServiceImpl implements RuleConfigService {
     @Override
     public void refreshCache() {
         log.info("[RuleConfigService] 开始刷新配置缓存...");
-        
+
         // 清空旧缓存
         configCache.clear();
-        
+
         // 从数据库加载所有启用的配置
         var configs = ruleConfigRepository.findByEnabledTrue();
-        
+
         for (RuleConfig entity : configs) {
+            // ✅ 核心修改：将 getScore() 替换为 getRiskLevel()
             ComponentConfig config = new ComponentConfig(
                     entity.getCode(),
-                    entity.getScore(),
+                    entity.getRiskLevel(),
                     entity.getParams(),
                     entity.getEnabled()
             );
             configCache.put(entity.getCode(), config);
-            log.debug("[RuleConfigService] 加载配置: code={}, score={}, params={}",
-                    entity.getCode(), entity.getScore(), entity.getParams());
+
+            // ✅ 核心修改：日志打印也同步改为 riskLevel
+            log.debug("[RuleConfigService] 加载配置: code={}, riskLevel={}, params={}",
+                    entity.getCode(), entity.getRiskLevel(), entity.getParams());
         }
-        
+
         log.info("[RuleConfigService] 配置缓存刷新完成，共加载 {} 条配置", configCache.size());
     }
 }

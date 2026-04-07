@@ -43,16 +43,40 @@ CREATE TABLE IF NOT EXISTS rule_config (
     code       VARCHAR(50)  NOT NULL UNIQUE,
     name       VARCHAR(100) NOT NULL,
     type       VARCHAR(30),
-    expression TEXT,
-    score      INTEGER  DEFAULT 0,
-    params     JSONB,                              -- 扩展参数（如 startHour、endHour）
+    risk_level VARCHAR(20) DEFAULT 'NONE',   -- 信号制下的风险等级: NONE / LOW / MEDIUM / HIGH
+    params     JSONB,                          -- 扩展参数（如 threshold、timeWindowHours）
     enabled    BOOLEAN  DEFAULT TRUE,
-    priority   INTEGER  DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_rule_config_enabled ON rule_config (enabled);
 CREATE INDEX IF NOT EXISTS idx_rule_config_code    ON rule_config (code);
+
+-- ============================================================
+-- 3.1 规则配置表迁移（处理历史表结构差异）
+-- ============================================================
+DO $$
+BEGIN
+    -- 添加 risk_level 列（如果不存在）
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'rule_config' AND column_name = 'risk_level') THEN
+        ALTER TABLE rule_config ADD COLUMN risk_level VARCHAR(20) DEFAULT 'NONE';
+    END IF;
+    
+    -- 删除已废弃的列（如果存在）
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'rule_config' AND column_name = 'expression') THEN
+        ALTER TABLE rule_config DROP COLUMN expression;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'rule_config' AND column_name = 'score') THEN
+        ALTER TABLE rule_config DROP COLUMN score;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_name = 'rule_config' AND column_name = 'priority') THEN
+        ALTER TABLE rule_config DROP COLUMN priority;
+    END IF;
+END $$;
 
 -- ============================================================
 -- 4. 动态决策阈值表
@@ -81,7 +105,20 @@ CREATE INDEX IF NOT EXISTS idx_threshold_user_level ON decision_threshold (user_
 CREATE INDEX IF NOT EXISTS idx_threshold_enabled    ON decision_threshold (enabled);
 
 -- ============================================================
--- 5. 决策日志表
+-- 5. 事件路由表（事件类型 → 工作流链路映射）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS event_routing (
+    id             BIGSERIAL PRIMARY KEY,
+    event_type     VARCHAR(50)  NOT NULL UNIQUE,  -- 事件类型（如 login / payment / register）
+    workflow_code  VARCHAR(50)  NOT NULL,          -- 对应 LiteFlow chainId
+    enabled        BOOLEAN      DEFAULT TRUE,
+    description    VARCHAR(200),
+    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- 6. 决策日志表（信号驱动制）
 -- ============================================================
 CREATE TABLE IF NOT EXISTS decision_log (
     id                 BIGSERIAL PRIMARY KEY,
@@ -92,13 +129,12 @@ CREATE TABLE IF NOT EXISTS decision_log (
     user_ip            VARCHAR(50),
     device_id          VARCHAR(100),
     request_data       JSONB,
-    risk_score         INTEGER   DEFAULT 0,
     decision           VARCHAR(20),              -- ACCEPT / CHALLENGE / REVIEW / REJECT
     decision_msg       VARCHAR(500),
-    node_results       JSONB,
+    node_results       JSONB,                    -- 完整信号快照
+    signal_summary     JSONB,                    -- 各等级信号数量统计
     execution_time     INTEGER,                  -- 毫秒
     user_level         VARCHAR(20),
-    ai_analysis_result TEXT,
     created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_decision_log_event_id   ON decision_log (event_id);
@@ -108,7 +144,7 @@ CREATE INDEX IF NOT EXISTS idx_decision_log_created_at ON decision_log (created_
 CREATE INDEX IF NOT EXISTS idx_decision_log_decision   ON decision_log (decision);
 
 -- ============================================================
--- 6. 用户画像表
+-- 7. 用户画像表
 -- ============================================================
 CREATE TABLE IF NOT EXISTS user_profile (
     id                BIGSERIAL PRIMARY KEY,

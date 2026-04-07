@@ -10,6 +10,7 @@ import java.util.Map;
 
 /**
  * 规则配置实体
+ * 作用：在信号驱动制下，仅用于存放各风控算子的动态阈值 (params) 和产出等级 (riskLevel)
  */
 @Data
 @Entity
@@ -29,15 +30,13 @@ public class RuleConfig {
     @Column(length = 30)
     private String type;
 
-    @Column(columnDefinition = "TEXT")
-    private String expression;
-
-    @Column(nullable = false)
-    private Integer score = 0;
+    // 新增：信号制下的动态风险等级 (替代了旧的 score)
+    @Column(length = 20)
+    private String riskLevel = "NONE";
 
     /**
      * 扩展参数（JSON 格式）
-     * 例如: {"startHour": 0, "endHour": 6}
+     * 极其重要：用于存放节点内部逻辑的动态阈值。例如: {"threshold": 5, "timeWindowHours": 24}
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
@@ -46,10 +45,7 @@ public class RuleConfig {
     @Column(nullable = false)
     private Boolean enabled = true;
 
-    @Column(nullable = false)
-    private Integer priority = 0;
-
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)

@@ -23,24 +23,23 @@ public abstract class AbstractRiskComponent extends NodeComponent {
             long latency = RiskTimeUtils.nowMs() - startTime;
 
             if (signal != null) {
-                //基于原信号克隆一个新信号，并把耗时塞进去
+                // 基于原信号克隆，补充耗时信息
                 signal = signal.toBuilder().latencyMs(latency).build();
-
-                // 3. 将包含耗时的新信号写入上下文
+                // 将信号写入上下文（不再累加分数，决策权交给大脑节点）
                 context.addRiskSignal(componentId, signal);
-
-                // 4. 累加分数
-                if (signal.getScoreContribution() != null && signal.getScoreContribution() != 0) {
-                    context.addTotalScore(signal.getScoreContribution());
-                }
             }
         } catch (Exception e) {
             long latency = RiskTimeUtils.nowMs() - startTime;
             log.error("[RiskFlow] Component {} execution failed. EventID: {}", componentId, context.getEventId(), e);
+            
+            // 发生异常时，不能简单视为安全。标记为 NONE 但打上强异常标签，由大脑节点决定是否拦截/审核。
             RiskSignal errorSignal = RiskSignal.builder()
-                    .scoreContribution(0)
+                    .ruleName(componentId)
+                    .riskLevel(RiskSignal.LEVEL_NONE)
                     .success(false)
-                    .evidence("Component Error: " + e.getMessage())
+                    .evidence("Component Execution Error: " + e.getMessage())
+                    .evidenceZh("组件执行异常: " + e.getMessage())
+                    .tags(java.util.Collections.singletonList("SYSTEM_ERROR"))
                     .latencyMs(latency)
                     .build();
             context.addRiskSignal(componentId, errorSignal);
