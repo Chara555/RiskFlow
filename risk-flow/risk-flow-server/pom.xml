@@ -60,11 +60,17 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Redis（可选，用于 RedisBlacklistServiceImpl）-->
+        <!-- Redis（可选，用于 RedisBlacklistServiceImpl / RedisThreatIpCacheServiceImpl）-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <!-- Caffeine（本地缓存，用于 LocalThreatIpCacheServiceImpl）-->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
 
         <!-- Lombok -->

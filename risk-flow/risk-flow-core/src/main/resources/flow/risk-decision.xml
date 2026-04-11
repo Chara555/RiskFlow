@@ -4,7 +4,7 @@
     <chain name="riskDecisionFlow">
         THEN(
             loadContext,
-            WHEN(newDeviceCheck, oddHourCheck, failCountCheck),
+            WHEN(localGeoIpFilter, datacenterAsnCheck, newDeviceCheck, oddHourCheck, failCountCheck),
             decisionJudge
         );
     </chain>

@@ -37,6 +37,7 @@ public interface RuleConfigService {
         @Getter
         private final String riskLevel;
 
+        @Getter
         private final Map<String, Object> params;
 
         @Getter
