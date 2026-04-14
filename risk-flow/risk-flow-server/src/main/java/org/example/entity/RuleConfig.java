@@ -2,10 +2,11 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.example.core.util.RiskTimeUtils;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -46,19 +47,19 @@ public class RuleConfig {
     private Boolean enabled = true;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = RiskTimeUtils.now();
+        updatedAt = RiskTimeUtils.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = RiskTimeUtils.now();
     }
 }

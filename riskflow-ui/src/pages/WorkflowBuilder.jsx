@@ -11,6 +11,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import RiskNode from '../components/RiskNode';
+import { toFlowDefinition } from '../utils/flowConverter';
+import flowApi from '../services/flowApi';
 
 const nodeTypes = {
     riskNode: RiskNode,
@@ -31,6 +33,7 @@ const initialNodes = [
         position: { x: 50, y: 160 },
         data: {
             label: 'IP Check', icon: 'public', type: 'check',
+            componentId: 'ipCheck', // 添加 componentId
             content: <p className="text-xs text-[#c7c4d7]">Analyze geolocation and reputation of inbound IP address.</p>,
             handles: [{ id: 'out' }]
         }
@@ -41,6 +44,7 @@ const initialNodes = [
         position: { x: 380, y: 150 },
         data: {
             label: 'Condition', icon: 'alt_route', type: 'logic',
+            componentId: 'isHighRisk', // 添加 componentId
             content: (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between"><span className="text-xs font-semibold text-[#ffb4ab]">If High Risk</span></div>
@@ -56,6 +60,7 @@ const initialNodes = [
         position: { x: 720, y: 80 },
         data: {
             label: 'Block Action', icon: 'block', type: 'action',
+            componentId: 'blockAction', // 添加 componentId
             content: <p className="text-xs text-[#ffb4ab]/80">Reject transaction and log as fraud attempt.</p>,
             handles: []
         }
@@ -66,6 +71,7 @@ const initialNodes = [
         position: { x: 720, y: 240 },
         data: {
             label: 'Velocity Check', icon: 'speed', type: 'trigger',
+            componentId: 'velocityCheck', // 添加 componentId
             content: (
                 <>
                     <p className="text-xs text-[#c7c4d7] mb-2">Monitor frequency of events per identity.</p>
@@ -96,9 +102,76 @@ export default function WorkflowBuilder() {
     const [activeWorkflow, setActiveWorkflow] = useState(mockWorkflows[0]);
     const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
+    // 保存状态
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState(null);
+
     const onConnect = useCallback((params) => setEdges((eds) => addEdge({ ...params, style: { stroke: '#8083ff', strokeWidth: 2 } }, eds)), [setEdges]);
     const onNodeClick = (_, node) => setSelectedNode(node);
     const onPaneClick = () => setSelectedNode(null);
+
+    /**
+     * 保存流程到后端
+     */
+    const handleSaveFlow = async () => {
+        setIsSaving(true);
+        setSaveMessage(null);
+
+        try {
+            const flowData = toFlowDefinition({
+                nodes,
+                edges,
+                code: activeWorkflow.id,
+                name: activeWorkflow.name,
+                description: `${activeWorkflow.name} - 由可视化编辑器生成`,
+            });
+
+            console.log('保存流程数据:', flowData);
+
+            const response = await flowApi.create(flowData);
+
+            console.log('保存成功:', response);
+            setSaveMessage({ type: 'success', text: `保存成功！EL: ${response.elExpression}` });
+
+        } catch (error) {
+            console.error('保存失败:', error);
+            setSaveMessage({ type: 'error', text: `保存失败: ${error.message}` });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    /**
+     * 发布流程
+     */
+    const handlePublishFlow = async () => {
+        setIsSaving(true);
+        setSaveMessage(null);
+
+        try {
+            // 先保存
+            const flowData = toFlowDefinition({
+                nodes,
+                edges,
+                code: activeWorkflow.id,
+                name: activeWorkflow.name,
+                description: `${activeWorkflow.name} - 由可视化编辑器生成`,
+            });
+
+            const response = await flowApi.create(flowData);
+
+            // 如果有 ID，则部署
+            if (response.id) {
+                await flowApi.deploy(response.id);
+                setSaveMessage({ type: 'success', text: '发布成功！流程已生效。' });
+            }
+        } catch (error) {
+            console.error('发布失败:', error);
+            setSaveMessage({ type: 'error', text: `发布失败: ${error.message}` });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#0b1326]">
@@ -143,14 +216,32 @@ export default function WorkflowBuilder() {
 
                 {/* 右侧：操作按钮 */}
                 <div className="flex items-center gap-3">
+                    {/* 保存状态提示 */}
+                    {saveMessage && (
+                        <span className={`px-3 py-1.5 rounded-lg text-xs ${
+                            saveMessage.type === 'success'
+                                ? 'bg-[#4edea3]/20 text-[#4edea3]'
+                                : 'bg-[#ffb4ab]/20 text-[#ffb4ab]'
+                        }`}>
+                            {saveMessage.text}
+                        </span>
+                    )}
                     <button className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#171f33] text-white hover:bg-[#222a3d] border border-[#2d3449]/50 transition-all">
                         Simulate
                     </button>
-                    <button className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#171f33] text-white hover:bg-[#222a3d] border border-[#2d3449]/50 transition-all">
-                        Save Draft
+                    <button
+                        onClick={handleSaveFlow}
+                        disabled={isSaving}
+                        className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#171f33] text-white hover:bg-[#222a3d] border border-[#2d3449]/50 transition-all disabled:opacity-50"
+                    >
+                        {isSaving ? 'Saving...' : 'Save Draft'}
                     </button>
-                    <button className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#c0c1ff] text-[#1000a9] hover:opacity-90 transition-all shadow-lg shadow-[#c0c1ff]/10">
-                        Publish Flow
+                    <button
+                        onClick={handlePublishFlow}
+                        disabled={isSaving}
+                        className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#c0c1ff] text-[#1000a9] hover:opacity-90 transition-all shadow-lg shadow-[#c0c1ff]/10 disabled:opacity-50"
+                    >
+                        {isSaving ? 'Publishing...' : 'Publish Flow'}
                     </button>
                 </div>
             </header>

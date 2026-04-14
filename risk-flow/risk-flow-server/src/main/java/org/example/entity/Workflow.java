@@ -2,7 +2,9 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import org.example.core.util.RiskTimeUtils;
+
+import java.time.Instant;
 
 /**
  * 流程定义实体
@@ -43,19 +45,19 @@ public class Workflow {
     private String createdBy;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = RiskTimeUtils.now();
+        updatedAt = RiskTimeUtils.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = RiskTimeUtils.now();
     }
 }

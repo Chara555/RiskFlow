@@ -2,6 +2,8 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.example.core.util.RiskTimeUtils;
+
 import java.time.Instant;
 
 /**
@@ -49,14 +51,13 @@ public class Blacklist {
 
     @PrePersist
     public void prePersist() {
-        // 使用 Instant.now() 产生的是标准 UTC 时间戳
-        Instant now = Instant.now();
+        Instant now = RiskTimeUtils.now();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.updatedAt = Instant.now();
+        this.updatedAt = RiskTimeUtils.now();
     }
 }

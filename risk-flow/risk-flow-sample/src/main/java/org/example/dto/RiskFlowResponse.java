@@ -5,7 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import org.example.core.util.RiskTimeUtils;
+
+import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -35,7 +37,7 @@ public class RiskFlowResponse {
     /**
      * 决策时间
      */
-    private LocalDateTime decisionTime;
+    private Instant decisionTime;
 
     /**
      * 执行耗时（毫秒）
@@ -55,8 +57,8 @@ public class RiskFlowResponse {
                 .decisionId(eventId)
                 .result(result)
                 .message("风控决策完成")
-                .decisionTime(LocalDateTime.now())
-                .executionTimeMs(System.currentTimeMillis())
+                .decisionTime(RiskTimeUtils.now())
+                .executionTimeMs(RiskTimeUtils.nowMs())
                 .build();
     }
 }

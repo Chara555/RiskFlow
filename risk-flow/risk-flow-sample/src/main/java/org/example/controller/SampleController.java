@@ -10,6 +10,7 @@ import org.example.dto.RiskFlowResponse;
 import org.example.service.RiskFlowService;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -188,9 +189,9 @@ public class SampleController {
      * 将 RiskFlowContext 转换为响应 DTO
      */
     private RiskFlowResponse toResponse(RiskFlowContext context) {
-        java.time.LocalDateTime decisionTime = null;
+        Instant decisionTime = null;
         if (context.getDecisionTimeMs() != null) {
-            decisionTime = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(context.getDecisionTimeMs()), java.time.ZoneId.systemDefault());
+            decisionTime = Instant.ofEpochMilli(context.getDecisionTimeMs());
         }
 
         return RiskFlowResponse.builder()

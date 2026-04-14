@@ -1,5 +1,6 @@
 package org.example.service.impl.redis;
 
+import org.example.core.util.RiskTimeUtils;
 import org.example.entity.Blacklist;
 import org.example.repository.BlacklistRepository;
 import org.example.service.BlacklistService;
@@ -9,7 +10,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +51,7 @@ public class RedisBlacklistServiceImpl implements BlacklistService {
         entity.setValue(value);
         entity.setSource("AUTO");
         if (durationMs != null && durationMs > 0) {
-            entity.setExpireTime(Instant.now().plusMillis(durationMs));
+            entity.setExpireTime(RiskTimeUtils.now().plusMillis(durationMs));
         }
         blacklistRepository.save(entity);
 
@@ -84,7 +84,7 @@ public class RedisBlacklistServiceImpl implements BlacklistService {
         for (Blacklist b : allValid) {
             long ttl = -1;
             if (b.getExpireTime() != null) {
-                ttl = b.getExpireTime().toEpochMilli() - Instant.now().toEpochMilli();
+                ttl = b.getExpireTime().toEpochMilli() - RiskTimeUtils.nowMs();
                 if (ttl <= 0) continue; // 已过期跳过
             }
 

@@ -2,6 +2,7 @@ package org.example.service.impl.local;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.example.core.util.RiskTimeUtils;
 import org.example.entity.Blacklist;
 import org.example.repository.BlacklistRepository;
 import org.example.service.BlacklistService;
@@ -10,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;  // 用于 addBlacklist 方法
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -53,7 +53,7 @@ public class LocalBlacklistServiceImpl implements BlacklistService {
         entity.setType(type.toUpperCase());
         entity.setValue(value);
         if (durationMs != null && durationMs > 0) {
-            entity.setExpireTime(Instant.now().plusMillis(durationMs));
+            entity.setExpireTime(RiskTimeUtils.now().plusMillis(durationMs));
         }
         entity.setSource("AUTO"); // 标记为系统自动拉黑
         blacklistRepository.save(entity);

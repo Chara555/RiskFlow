@@ -2,7 +2,9 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import org.example.core.util.RiskTimeUtils;
+
+import java.time.Instant;
 
 /**
  * 用户画像实体
@@ -78,15 +80,15 @@ public class UserProfile {
 
     /** 最后事件时间 */
     @Column
-    private LocalDateTime lastEventTime;
+    private Instant lastEventTime;
 
     /** 最后登录时间 */
     @Column
-    private LocalDateTime lastLoginTime;
+    private Instant lastLoginTime;
 
     /** 最后支付时间 */
     @Column
-    private LocalDateTime lastPaymentTime;
+    private Instant lastPaymentTime;
 
     /** 关联设备数量 */
     @Column(nullable = false)
@@ -109,19 +111,19 @@ public class UserProfile {
     private String profileData;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = RiskTimeUtils.now();
+        updatedAt = RiskTimeUtils.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = RiskTimeUtils.now();
     }
 }

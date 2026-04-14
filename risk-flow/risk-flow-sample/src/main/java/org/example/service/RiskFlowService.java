@@ -3,6 +3,8 @@ package org.example.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.context.RiskFlowContext;
+import org.example.core.util.BizException;
+import org.example.core.util.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -43,7 +45,7 @@ public class RiskFlowService {
     @SuppressWarnings("unchecked")
     private RiskFlowContext invokeFlowExecutor(Object executor, String flowId, RiskFlowContext context) throws Exception {
         if (executor == null) {
-            throw new IllegalStateException("FlowExecutor 未注入");
+            throw new BizException(ErrorCode.SYSTEM_ERROR, "FlowExecutor 未注入");
         }
         try {
             java.lang.reflect.Method m = executor.getClass().getMethod("execute2Resp", String.class, Object.class);
